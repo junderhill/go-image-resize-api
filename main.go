@@ -1,10 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"image/jpeg"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
+
+	"github.com/nfnt/resize"
 )
 
 func main() {
@@ -27,11 +32,35 @@ func main() {
 			return
 		}
 
-		fmt.Fprintf(w, "Image Requested - Size %d px", sizeInt)
+		resizedImage := getImage("images/01.jpg", uint(sizeInt))
+		fmt.Fprintf(w, "%s", resizedImage)
 	})
 
 	fmt.Printf("Starting server on port %d", port)
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func getImage(filename string, size uint) []byte {
+	file, err := os.Open(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	img, err := jpeg.Decode(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	file.Close()
+
+	m := resize.Resize(size, 0, img, resize.Lanczos3)
+
+	buf := new(bytes.Buffer)
+	if err := jpeg.Encode(buf, m, nil); err != nil {
+		log.Fatal(err)
+	}
+
+	return buf.Bytes()
 }
