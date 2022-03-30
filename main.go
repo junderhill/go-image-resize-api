@@ -16,11 +16,12 @@ func main() {
 	port := 8080
 
 	http.HandleFunc("/image", imageHandler)
+	fmt.Printf("Listening on port %d\n", port)
 
-	fmt.Printf("Starting server on port %d", port)
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)
 	}
+
 }
 
 func imageHandler(w http.ResponseWriter, r *http.Request) {
