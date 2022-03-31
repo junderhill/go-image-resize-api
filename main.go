@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/nfnt/resize"
@@ -22,10 +23,15 @@ func main() {
 	http.Handle("/", r)
 
 	fmt.Printf("Listening on port %d\n", port)
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		log.Fatal(err)
+
+	srv := &http.Server{
+		Handler:      r,
+		Addr:         ":" + strconv.Itoa(port),
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 
+	log.Fatal(srv.ListenAndServe())
 }
 
 func imageHandler(w http.ResponseWriter, r *http.Request) {
