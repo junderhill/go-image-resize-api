@@ -9,15 +9,19 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/gorilla/mux"
 	"github.com/nfnt/resize"
 )
 
 func main() {
 	port := 8080
 
-	http.HandleFunc("/image", imageHandler)
-	fmt.Printf("Listening on port %d\n", port)
+	r := mux.NewRouter()
 
+	r.HandleFunc("/image/{file}", imageHandler)
+	http.Handle("/", r)
+
+	fmt.Printf("Listening on port %d\n", port)
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)
 	}
@@ -25,11 +29,19 @@ func main() {
 }
 
 func imageHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("%s /image route requested", r.Method)
+	vars := mux.Vars(r)
+
+	if vars["file"] == "" {
+		fmt.Printf("No file specified\n")
+		w.WriteHeader(http.StatusNotFound)
+	}
+	filename := vars["file"]
+
+	fmt.Printf("%s %s requested \n", r.Method, r.URL)
 
 	keys, ok := r.URL.Query()["size"]
 	if !ok || len(keys[0]) < 1 {
-		http.Error(w, "Missing `size` query string parameter", http.StatusBadRequest)
+		http.Error(w, "Missing `size` query string parameter\n", http.StatusBadRequest)
 		return
 	}
 
@@ -37,11 +49,11 @@ func imageHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println(err)
 		fmt.Fprintln(w, err)
-		http.Error(w, "Invalid `size` parameter", http.StatusBadRequest)
+		http.Error(w, "Invalid `size` parameter\n", http.StatusBadRequest)
 		return
 	}
 
-	resizedImage := getImage("images/01.jpg", uint(sizeInt))
+	resizedImage := getImage("images/"+filename, uint(sizeInt))
 	fmt.Fprintf(w, "%s", resizedImage)
 }
 
